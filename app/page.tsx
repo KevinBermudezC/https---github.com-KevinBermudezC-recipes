@@ -5,18 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Clock, Users } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
+import { useRecipes } from "@/hooks/useRecipes";
 
 export default function Home() {
-  const recipes = [
-    {
-      id: 1,
-      title: "Spanish Paella",
-      image: "https://images.unsplash.com/photo-1534080564583-6be75777b70a?q=80&w=2070&auto=format&fit=crop",
-      time: "45 min",
-      servings: 4,
-      description: "Authentic Spanish paella with rice, chicken, rabbit and vegetables.",
-    },
-  ];
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+  const { recipes, loading } = useRecipes();
+
+  const handleShareClick = () => {
+    if (isAuthenticated) {
+      router.push('/create-recipe');
+    } else {
+      router.push('/login');
+    }
+  };
 
   return (
     <>
@@ -35,11 +39,13 @@ export default function Home() {
                 Join our community of food lovers and share your favorite recipes with the world
               </p>
               <div className="flex space-x-4">
-                <Link href="/create-recipe">
-                  <Button size="lg" className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
-                    Share Recipe
-                  </Button>
-                </Link>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800"
+                  onClick={handleShareClick}
+                >
+                  Share Recipe
+                </Button>
                 <Link href="/explore">
                   <Button variant="outline" size="lg">
                     Explore Recipes
@@ -51,38 +57,42 @@ export default function Home() {
 
           <section className="py-20 w-full">
             <h2 className="text-3xl font-bold mb-12 text-center">Featured Recipes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {recipes.map((recipe) => (
-                <Link href={`/recipes/${recipe.id}`} key={recipe.id}>
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow backdrop-blur-sm bg-white/50 dark:bg-black/50">
-                    <div className="aspect-video relative">
-                      <Image
-                        src={recipe.image}
-                        alt={recipe.title}
-                        className="object-cover"
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        priority={true}
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-xl font-semibold mb-2">{recipe.title}</h3>
-                      <p className="text-muted-foreground mb-4">{recipe.description}</p>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {recipe.time}
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
-                          {recipe.servings} servings
+            {loading ? (
+              <div className="text-center">Loading recipes...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {recipes.map((recipe) => (
+                  <Link href={`/recipes/${recipe.$id}`} key={recipe.$id}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow backdrop-blur-sm bg-white/50 dark:bg-black/50">
+                      <div className="aspect-video relative">
+                        <Image
+                          src={recipe.image}
+                          alt={recipe.title}
+                          className="object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          priority={true}
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-xl font-semibold mb-2">{recipe.title}</h3>
+                        <p className="text-muted-foreground mb-4">{recipe.description}</p>
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {recipe.time}
+                          </div>
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            {recipe.servings} servings
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       </main>

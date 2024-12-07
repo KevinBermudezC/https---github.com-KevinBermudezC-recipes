@@ -5,6 +5,7 @@ import { Navbar } from '@/components/navbar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { I18nProvider } from '@/providers/i18n-provider';
+import { Toaster as SonnerToaster } from "sonner";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -32,7 +33,7 @@ export default function RootLayout({
             <main className="min-h-screen bg-background">
               {children}
             </main>
-            <Toaster />
+            <SonnerToaster richColors position="top-center" />
           </I18nProvider>
         </ThemeProvider>
       </body>

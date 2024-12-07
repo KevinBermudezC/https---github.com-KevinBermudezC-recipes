@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clock, Users } from "lucide-react";
-import { Metadata } from 'next';
 import Image from 'next/image';
 import { RecipeActions } from "./components/recipe-actions";
+import { RecipeService } from "@/lib/services/recipe.service";
+import { Recipe } from "@/types/recipe";
 
 interface Props {
   params: {
@@ -11,46 +12,36 @@ interface Props {
   };
 }
 
-// Datos simulados - en un caso real, esto vendría de una API o base de datos
-const getRecipe = async (id: string) => {
-  return {
-    title: "Paella Valenciana",
-    image: "https://images.unsplash.com/photo-1534080564583-6be75777b70a?q=80&w=2070&auto=format&fit=crop",
-    time: "45 min",
-    servings: 4,
-    description: "Auténtica paella valenciana con arroz, pollo, conejo y verduras.",
-    author: "María García",
-    ingredients: [
-      { name: "Arroz bomba", quantity: "400", unit: "g" },
-      { name: "Pollo", quantity: "500", unit: "g" },
-      { name: "Judías verdes", quantity: "200", unit: "g" },
-      { name: "Azafrán", quantity: "1", unit: "sobre" },
-    ],
-    instructions: [
-      "Calentar el aceite en la paella y sofreír el pollo hasta que esté dorado.",
-      "Añadir las verduras y cocinar por 5 minutos.",
-      "Incorporar el arroz y el caldo caliente.",
-      "Cocinar a fuego medio durante 18-20 minutos.",
-    ],
-  };
-};
-
-export async function generateStaticParams() {
-  return [
-    { id: '1' },
-  ];
+interface Ingredient {
+  name: string;
+  amount: string;
+  unit: string;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const recipe = await getRecipe(params.id);
-  return {
-    title: `Receta: ${recipe.title}`,
-    description: recipe.description,
-  };
+async function getRecipe(id: string) {
+  try {
+    const recipeData = await RecipeService.getRecipe(id);
+    return {
+      ...recipeData as unknown as Recipe,
+      ingredients: JSON.parse(recipeData.ingredients),
+      instructions: JSON.parse(recipeData.instructions)
+    };
+  } catch (error) {
+    console.error('Error fetching recipe:', error);
+    return null;
+  }
 }
 
-export default async function RecipePage({ params }: Props) {
-  const recipe = await getRecipe(params.id);
+export default async function RecipePage({ 
+  params: { id } 
+}: { 
+  params: { id: string } 
+}) {
+  const recipe = await getRecipe(await id);
+
+  if (!recipe) {
+    return <div className="container py-8 text-center">Recipe not found</div>;
+  }
 
   return (
     <div className="container py-8">
@@ -77,22 +68,25 @@ export default async function RecipePage({ params }: Props) {
               </div>
               <div className="flex items-center">
                 <Users className="h-5 w-5 mr-2" />
-                {recipe.servings} porciones
+                {recipe.servings} servings
               </div>
             </div>
           </div>
-          <RecipeActions />
+          <RecipeActions 
+            recipeId={recipe.$id ?? ''} 
+            userId={recipe.userId ?? ''} 
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Ingredientes</h2>
+            <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
             <ul className="space-y-2">
-              {recipe.ingredients.map((ingredient, index) => (
+              {recipe.ingredients.map((ingredient: Ingredient, index: number) => (
                 <li key={index} className="flex justify-between">
                   <span>{ingredient.name}</span>
                   <span className="text-muted-foreground">
-                    {ingredient.quantity} {ingredient.unit}
+                    {ingredient.amount} {ingredient.unit}
                   </span>
                 </li>
               ))}
@@ -100,9 +94,9 @@ export default async function RecipePage({ params }: Props) {
           </Card>
 
           <div className="md:col-span-2">
-            <h2 className="text-xl font-semibold mb-4">Instrucciones</h2>
+            <h2 className="text-xl font-semibold mb-4">Instructions</h2>
             <ol className="space-y-4">
-              {recipe.instructions.map((instruction, index) => (
+              {recipe.instructions.map((instruction: string, index: number) => (
                 <li key={index} className="flex">
                   <span className="font-bold mr-4">{index + 1}.</span>
                   <span>{instruction}</span>

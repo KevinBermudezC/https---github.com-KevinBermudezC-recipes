@@ -11,8 +11,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useAuth } from '@/lib/auth';
 
 export function Navbar() {
+  const { isAuthenticated, logout } = useAuth();
+
   return (
     <nav className="fixed top-0 w-full border-b bg-background/50 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 z-50">
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,14 +30,30 @@ export function Navbar() {
             <Link href="/explore" className="text-sm font-medium hover:text-primary">
               Explore
             </Link>
-            <Link href="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/register">
-              <Button className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
-                Register
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link href="/create-recipe">
+                  <Button variant="ghost">Create Recipe</Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  onClick={logout}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost">Login</Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
+                    Register
+                  </Button>
+                </Link>
+              </>
+            )}
             <ThemeToggle />
           </div>
 
@@ -59,18 +78,37 @@ export function Navbar() {
                   >
                     Explore
                   </Link>
-                  <Link href="/login">
-                    <Button variant="ghost" className="w-full justify-start">
-                      Login
-                    </Button>
-                  </Link>
-                  <Link href="/register">
-                    <Button 
-                      className="w-full justify-start bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800"
-                    >
-                      Register
-                    </Button>
-                  </Link>
+                  {isAuthenticated ? (
+                    <>
+                      <Link href="/create-recipe">
+                        <Button variant="ghost" className="w-full justify-start">
+                          Create Recipe
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start"
+                        onClick={logout}
+                      >
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login">
+                        <Button variant="ghost" className="w-full justify-start">
+                          Login
+                        </Button>
+                      </Link>
+                      <Link href="/register">
+                        <Button 
+                          className="w-full justify-start bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800"
+                        >
+                          Register
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </nav>
               </SheetContent>
             </Sheet>
