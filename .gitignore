@@ -36,3 +36,4 @@ next-env.d.ts
 .bolt/ignore
 .bolt/config.json
 .bolt/prompt
+.bolt

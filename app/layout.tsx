@@ -6,12 +6,13 @@ import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster as SonnerToaster } from "sonner";
 import { AuthProvider } from '@/lib/auth';
+import { Footer } from '@/components/footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Recetas Compartidas',
-  description: 'Comparte y descubre recetas increíbles',
+  title: 'CookBook',
+  description: 'Share and discover amazing recipes',
 };
 
 export default function RootLayout({
@@ -29,12 +30,15 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
+            <div className="relative min-h-screen">
               <Navbar />
               <main className="min-h-screen bg-background">
                 {children}
               </main>
+              <Footer />
               <SonnerToaster richColors position="top-center" />
               <Toaster />
+            </div>
           </AuthProvider>
         </ThemeProvider>
       </body>
