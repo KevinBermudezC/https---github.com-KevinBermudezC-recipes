@@ -4,8 +4,8 @@ import { Inter } from 'next/font/google';
 import { Navbar } from '@/components/navbar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { I18nProvider } from '@/providers/i18n-provider';
 import { Toaster as SonnerToaster } from "sonner";
+import { AuthProvider } from '@/lib/auth';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
@@ -28,13 +28,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <I18nProvider>
-            <Navbar />
-            <main className="min-h-screen bg-background">
-              {children}
-            </main>
-            <SonnerToaster richColors position="top-center" />
-          </I18nProvider>
+          <AuthProvider>
+              <Navbar />
+              <main className="min-h-screen bg-background">
+                {children}
+              </main>
+              <SonnerToaster richColors position="top-center" />
+              <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

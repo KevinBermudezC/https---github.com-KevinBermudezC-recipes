@@ -1,22 +1,96 @@
+'use client';
+
 import { account } from '@/lib/appwrite';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, createContext, useContext, ReactNode } from 'react';
+import { useToast } from "@/components/ui/use-toast";
+import { ID } from 'appwrite';
+import React from 'react';
+
+interface AppwriteError {
+  code: number;
+  message: string;
+}
+
+interface User {
+  $id: string;
+  name: string;
+  email: string;
+  emailVerification: boolean;
+  providerAccessToken?: string;
+  isAnonymous?: boolean;
+}
+
+const AuthContext = createContext<ReturnType<typeof useAuth> | undefined>(undefined);
 
 export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { toast } = useToast();
+
+  const checkAuth = useCallback(async () => {
+    try {
+      let session;
+      try {
+        session = await account.getSession('current');
+      } catch {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!session || session.provider === 'anonymous') {
+        setUser(null);
+        // Limpiar cualquier sesión anónima
+        try {
+          await account.deleteSession('current');
+        } catch {}
+        setIsLoading(false);
+        return;
+      }
+
+      const userData = await account.get();
+      
+      // Solo aceptar usuarios verificados o de OAuth
+      if (userData.emailVerification || session.provider === 'google' || session.provider === 'facebook') {
+        setUser({
+          $id: userData.$id,
+          name: userData.name,
+          email: userData.email,
+          emailVerification: userData.emailVerification,
+          providerAccessToken: session.providerAccessToken,
+          isAnonymous: false
+        });
+      } else {
+        setUser(null);
+        await account.deleteSession('current');
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
-  const checkAuth = async () => {
+  const loginWithEmail = async (email: string, password: string) => {
     try {
-      const session = await account.getSession('current');
-      setIsAuthenticated(true);
+      setIsLoading(true);
+      await account.createEmailSession(email, password);
+      await checkAuth();
+      router.push('/');
     } catch (error) {
-      setIsAuthenticated(false);
+      console.error('Email login error:', error);
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: "Invalid email or password"
+      });
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -26,11 +100,18 @@ export function useAuth() {
     try {
       await account.createOAuth2Session(
         'google',
-        `${window.location.origin}/create-recipe`,
+        `${window.location.origin}/`,
         `${window.location.origin}/login`
       );
-    } catch (error) {
-      console.error('Error logging in with Google:', error);
+    } catch (error: any) {
+      if (error?.code !== 409) {
+        console.error('Google login error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to login with Google"
+        });
+      }
     }
   };
 
@@ -38,47 +119,98 @@ export function useAuth() {
     try {
       await account.createOAuth2Session(
         'facebook',
-        'http://localhost:3000/create-recipe',
-        'http://localhost:3000/login'
+        `${window.location.origin}/`,
+        `${window.location.origin}/login`
       );
-    } catch (error) {
-      console.error('Error logging in with Facebook:', error);
+    } catch (error: any) {
+      if (error?.code !== 409) {
+        console.error('Facebook login error:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to login with Facebook"
+        });
+      }
     }
   };
 
-  const loginWithEmail = async (email: string, password: string) => {
+  const register = async (email: string, password: string, name: string) => {
     try {
-      await account.createEmailSession(email, password);
-      setIsAuthenticated(true);
-      router.push('/create-recipe');
-    } catch (error) {
-      console.error('Error logging in with email:', error);
+      try {
+        await account.get();
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: "You are already logged in"
+        });
+        return;
+      } catch {}
+
+      await account.create(ID.unique(), email, password, name);
+      toast({
+        title: "Registration successful",
+        description: "Please login with your new account"
+      });
+      router.push('/login');
+    } catch (error: any) {
+      if (error?.code === 409) {
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: "Email already exists"
+        });
+      } else {
+        console.error('Registration error:', error);
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: "Please try again later"
+        });
+      }
     }
   };
 
   const logout = async () => {
     try {
+      setIsLoading(true);
       await account.deleteSession('current');
-      setIsAuthenticated(false);
+      setUser(null);
       router.push('/login');
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const requireAuth = () => {
-    if (!isLoading && !isAuthenticated) {
+  const requireAuth = useCallback(() => {
+    if (!isLoading && !user) {
       router.push('/login');
     }
-  };
+  }, [isLoading, user, router]);
 
-  return { 
-    isAuthenticated, 
-    isLoading, 
-    requireAuth, 
-    loginWithGoogle, 
-    loginWithFacebook,
+  return {
+    user,
+    isLoading,
+    isAuthenticated: !!user && !isLoading && !user.isAnonymous,
     loginWithEmail,
-    logout 
+    loginWithGoogle,
+    loginWithFacebook,
+    register,
+    signOut: logout,
+    requireAuth
   };
+}
+
+export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
+  const auth = useAuth();
+  return React.createElement(AuthContext.Provider, { value: auth }, children);
+}
+
+export function useAuthContext() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
 }

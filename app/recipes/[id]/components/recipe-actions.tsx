@@ -1,52 +1,56 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Heart, Share2, Trash2 } from "lucide-react";
-import { useAuth } from "@/lib/auth";
+import { useAuthContext } from "@/lib/auth";
 import { RecipeService } from "@/lib/services/recipe.service";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { EditRecipeDialog } from "./edit-recipe-dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { Recipe } from "@/types/recipe";
 
-interface RecipeActionsProps {
-  recipeId?: string;
-  userId?: string;
+interface Props {
+  recipeId: string;
+  userId: string;
+  recipe: Recipe;
 }
 
-export function RecipeActions({ recipeId, userId }: RecipeActionsProps) {
-  const { isAuthenticated } = useAuth();
+export function RecipeActions({ recipeId, userId, recipe }: Props) {
+  const { user } = useAuthContext();
   const router = useRouter();
+  const { toast } = useToast();
+
+  const isOwner = user?.$id === userId;
 
   const handleDelete = async () => {
-    if (!recipeId) return;
-    
+    if (!window.confirm("Are you sure you want to delete this recipe?")) return;
+
     try {
       await RecipeService.deleteRecipe(recipeId);
-      toast.success("Recipe deleted successfully");
-      router.push("/explore");
+      toast({
+        title: "Success",
+        description: "Recipe deleted successfully",
+      });
+      router.push("/");
     } catch (error) {
-      toast.error("Failed to delete recipe");
-      console.error('Error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete recipe",
+      });
     }
   };
 
+  if (!isOwner) return null;
+
   return (
-    <div className="flex space-x-2">
-      <Button variant="outline" size="icon">
-        <Heart className="h-5 w-5" />
+    <div className="flex items-center space-x-2">
+      <EditRecipeDialog 
+        recipe={recipe}
+        onUpdate={() => router.refresh()}
+      />
+      <Button variant="destructive" onClick={handleDelete}>
+        Delete
       </Button>
-      <Button variant="outline" size="icon">
-        <Share2 className="h-5 w-5" />
-      </Button>
-      {isAuthenticated && (
-        <Button 
-          variant="outline" 
-          size="icon"
-          onClick={handleDelete}
-          className="text-red-500 hover:text-red-600"
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      )}
     </div>
   );
 } 

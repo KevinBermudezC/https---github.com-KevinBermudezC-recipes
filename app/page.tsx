@@ -12,7 +12,7 @@ import { useRecipes } from "@/hooks/useRecipes";
 export default function Home() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const { recipes, loading } = useRecipes();
+  const { recipes, loading } = useRecipes(false);
 
   const handleShareClick = () => {
     if (isAuthenticated) {
@@ -44,7 +44,7 @@ export default function Home() {
                   className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800"
                   onClick={handleShareClick}
                 >
-                  Share Recipe
+                  Create Recipe
                 </Button>
                 <Link href="/explore">
                   <Button variant="outline" size="lg">

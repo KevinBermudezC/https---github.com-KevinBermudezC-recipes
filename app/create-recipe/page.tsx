@@ -14,6 +14,10 @@ import { toast } from "sonner";
 import { z } from "zod";
 import Image from "next/image";
 
+function generateUniqueId() {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
 interface Ingredient {
   name: string;
   amount: string;
@@ -203,15 +207,20 @@ export default function CreateRecipe() {
       
       let imageUrl = '';
       if (imageFile) {
-        // Crear el archivo
+        const fileId = generateUniqueId();
+
         const file = await storage.createFile(
           process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!,
-          ID.unique(),
+          fileId,
           imageFile
         );
 
-        // Obtener la URL de la imagen usando el método de Appwrite
-        imageUrl = `https://cloud.appwrite.io/v1/storage/buckets/${process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID}/files/${file.$id}/view?project=${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`;
+        imageUrl = storage.getFileView(
+          process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!,
+          fileId
+        ).href;
+        
+        console.log('Image URL:', imageUrl);
       }
 
       const recipeData: RecipeData = {

@@ -2,119 +2,88 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { UtensilsCrossed, Menu } from "lucide-react";
+import { UtensilsCrossed, Menu, Plus, User, LogOut } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetTrigger,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { useAuth } from '@/lib/auth';
+import { useAuthContext } from '@/lib/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
+  const { user, signOut } = useAuthContext();
 
   return (
-    <nav className="fixed top-0 w-full border-b bg-background/50 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60 z-50">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
+    <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="container flex h-14 items-center">
+        <div className="flex items-center space-x-8 flex-1">
+          {/* Logo - sin requerir autenticación */}
+          <Link href="/" className="font-bold text-xl flex items-center space-x-2" passHref>
             <UtensilsCrossed className="h-6 w-6" />
-            <span className="font-bold text-lg">Shared Recipes</span>
+            <span>CookBook</span>
           </Link>
-          
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link href="/explore" className="text-sm font-medium hover:text-primary">
-              Explore
-            </Link>
-            {isAuthenticated ? (
-              <>
-                <Link href="/create-recipe">
-                  <Button variant="ghost">Create Recipe</Button>
-                </Link>
-                <Button 
-                  variant="ghost" 
-                  onClick={logout}
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="ghost">Login</Button>
-                </Link>
-                <Link href="/register">
-                  <Button className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
-                    Register
-                  </Button>
-                </Link>
-              </>
-            )}
-            <ThemeToggle />
-          </div>
 
-          {/* Mobile Menu */}
-          <div className="md:hidden flex items-center space-x-4">
-            <ThemeToggle />
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <nav className="flex flex-col space-y-4 mt-4">
-                  <Link
-                    href="/explore"
-                    className="text-sm font-medium hover:text-primary"
-                  >
-                    Explore
-                  </Link>
-                  {isAuthenticated ? (
-                    <>
-                      <Link href="/create-recipe">
-                        <Button variant="ghost" className="w-full justify-start">
-                          Create Recipe
-                        </Button>
-                      </Link>
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start"
-                        onClick={logout}
-                      >
-                        Logout
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Link href="/login">
-                        <Button variant="ghost" className="w-full justify-start">
-                          Login
-                        </Button>
-                      </Link>
-                      <Link href="/register">
-                        <Button 
-                          className="w-full justify-start bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800"
-                        >
-                          Register
-                        </Button>
-                      </Link>
-                    </>
-                  )}
-                </nav>
-              </SheetContent>
-            </Sheet>
+          {/* Navigation Links - sin requerir autenticación */}
+          <div className="hidden md:flex space-x-4">
+            <Link href="/explore">
+              <Button variant="ghost">Explore Recipes</Button>
+            </Link>
           </div>
         </div>
-      </div>
-    </nav>
+
+        {/* Right side items */}
+        <div className="flex items-center space-x-4">
+          <ThemeToggle />
+          
+          {user ? (
+            <>
+              <Link href="/create-recipe">
+                <Button variant="ghost" size="icon" title="Create Recipe">
+                  <Plus className="h-5 w-5" />
+                </Button>
+              </Link>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage 
+                        src={user.providerAccessToken ? `https://lh3.googleusercontent.com/a/${user.providerAccessToken}` : undefined} 
+                        alt={user.name || 'User'} 
+                      />
+                      <AvatarFallback>
+                        {user.name ? user.name[0].toUpperCase() : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <Link href="/profile">
+                    <DropdownMenuItem className="flex items-center">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>{user.name || 'User'}</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuItem 
+                    className="flex items-center text-red-600 focus:text-red-600"
+                    onClick={() => signOut()}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <Link href="/login">
+              <Button>Login</Button>
+            </Link>
+          )}
+        </div>
+      </nav>
+    </header>
   );
 }

@@ -7,9 +7,13 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: [
-      'images.unsplash.com',
-      'cloud.appwrite.io'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cloud.appwrite.io',
+        port: '',
+        pathname: '/v1/storage/buckets/**',
+      },
     ],
   },
 };

@@ -21,6 +21,8 @@ interface Ingredient {
 async function getRecipe(id: string) {
   try {
     const recipeData = await RecipeService.getRecipe(id);
+    if (!recipeData) return null;
+
     return {
       ...recipeData as unknown as Recipe,
       ingredients: JSON.parse(recipeData.ingredients),
@@ -32,19 +34,16 @@ async function getRecipe(id: string) {
   }
 }
 
-export default async function RecipePage({ 
-  params: { id } 
-}: { 
-  params: { id: string } 
-}) {
-  const recipe = await getRecipe(await id);
+export default async function RecipePage({ params }: Props) {
+  const id = await params.id;
+  const recipe = await getRecipe(id);
 
   if (!recipe) {
     return <div className="container py-8 text-center">Recipe not found</div>;
   }
 
   return (
-    <div className="container py-8">
+    <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
       <div className="max-w-4xl mx-auto">
         <div className="relative aspect-video mb-8 rounded-lg overflow-hidden">
           <Image
@@ -75,6 +74,7 @@ export default async function RecipePage({
           <RecipeActions 
             recipeId={recipe.$id ?? ''} 
             userId={recipe.userId ?? ''} 
+            recipe={recipe} 
           />
         </div>
 

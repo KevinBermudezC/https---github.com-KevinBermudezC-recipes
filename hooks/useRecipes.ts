@@ -1,56 +1,51 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Recipe } from '@/types/recipe';
 import { RecipeService } from '@/lib/services/recipe.service';
+import { useAuth } from '@/lib/auth';
 
-export function useRecipes() {
+export function useRecipes(requireAuth: boolean = false) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
-  const fetchRecipes = async () => {
+  const fetchRecipes = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await RecipeService.getAllRecipes();
-      setRecipes(data);
+      let data;
+      if (requireAuth && user) {
+        data = await RecipeService.getRecipesByUser(user.$id);
+      } else {
+        data = await RecipeService.getAllRecipes();
+      }
+      setRecipes(data.map(doc => ({
+        $id: doc.$id,
+        $createdAt: doc.$createdAt,
+        title: doc.title,
+        description: doc.description,
+        time: doc.time,
+        servings: doc.servings,
+        ingredients: doc.ingredients,
+        instructions: doc.instructions,
+        image: doc.image,
+        userId: doc.userId
+      })));
     } catch (err) {
       setError('Error fetching recipes');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, requireAuth]);
 
   useEffect(() => {
     fetchRecipes();
-  }, []);
-
-  const createRecipe = async (recipe: Omit<Recipe, '$id' | '$createdAt'>) => {
-    try {
-      const newRecipe = await RecipeService.createRecipe(recipe);
-      setRecipes([...recipes, newRecipe]);
-      return newRecipe;
-    } catch (err) {
-      setError('Error creating recipe');
-      throw err;
-    }
-  };
-
-  const deleteRecipe = async (id: string) => {
-    try {
-      await RecipeService.deleteRecipe(id);
-      setRecipes(recipes.filter(recipe => recipe.$id !== id));
-    } catch (err) {
-      setError('Error deleting recipe');
-      throw err;
-    }
-  };
+  }, [fetchRecipes]);
 
   return {
     recipes,
     loading,
     error,
-    createRecipe,
-    deleteRecipe,
     refreshRecipes: fetchRecipes
   };
 } 
