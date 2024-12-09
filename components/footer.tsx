@@ -21,7 +21,7 @@ export function Footer() {
             <p className="text-sm leading-loose px-4">
               Built with <Heart className="inline-block h-4 w-4 text-red-500 animate-pulse" /> by{" "}
               <a
-                href="https://github.com/yourusername"
+                href="https://github.com/KevinBermudezC"
                 target="_blank"
                 rel="noreferrer"
                 className="font-medium underline underline-offset-4 hover:text-primary"

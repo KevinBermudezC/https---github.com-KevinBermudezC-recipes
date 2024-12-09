@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
 import Image from "next/image";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function generateUniqueId() {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -339,12 +340,24 @@ export default function CreateRecipe() {
                               value={ingredient.amount}
                               onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
                             />
-                            <Input
-                              className="flex-1"
-                              placeholder="Unit (e.g. g)"
+                            <Select
                               value={ingredient.unit}
-                              onChange={(e) => updateIngredient(index, 'unit', e.target.value)}
-                            />
+                              onValueChange={(value) => updateIngredient(index, 'unit', value)}
+                            >
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Select unit" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="g">Grams (g)</SelectItem>
+                                <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                                <SelectItem value="ml">Milliliters (ml)</SelectItem>
+                                <SelectItem value="l">Liters (l)</SelectItem>
+                                <SelectItem value="cup">Cups</SelectItem>
+                                <SelectItem value="tbsp">Tablespoons</SelectItem>
+                                <SelectItem value="tsp">Teaspoons</SelectItem>
+                                <SelectItem value="unit">Units</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                         {ingredients.length > 1 && (

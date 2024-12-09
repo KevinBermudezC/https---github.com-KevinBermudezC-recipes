@@ -82,13 +82,13 @@ export default function Home() {
           <motion.div className="w-full">
             <AnimatedText 
               text="Share and discover amazing recipes"
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-200 bg-clip-text text-transparent"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-200 bg-clip-text text-transparent leading-relaxed pb-2"
               delay={0.2}
             />
             
             <AnimatedText 
               text="Join our community of food lovers"
-              className="mt-8 text-xl sm:text-2xl md:text-3xl lg:text-4xl text-muted-foreground"
+              className="mt-8 text-xl sm:text-2xl md:text-3xl lg:text-4xl text-muted-foreground leading-relaxed"
               delay={0.7}
             />
 
@@ -100,7 +100,7 @@ export default function Home() {
             >
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800 h-11"
+                className="bg-gradient-to-r from-accent to-secondary hover:from-secondary hover:to-accent text-primary-foreground dark:from-primary dark:to-secondary dark:hover:from-secondary dark:hover:to-primary h-11 transition-all"
                 onClick={handleShareClick}
               >
                 Create Recipe
@@ -109,7 +109,7 @@ export default function Home() {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="text-foreground border-foreground hover:bg-foreground/10 h-11"
+                  className="text-foreground border-secondary hover:bg-foreground/10 hover:text-foreground dark:border-primary dark:text-foreground dark:hover:bg-foreground/20 h-11"
                 >
                   Explore Recipes
                 </Button>
@@ -125,31 +125,33 @@ export default function Home() {
             {loading ? (
               <div className="text-center">Loading recipes...</div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recipes.map((recipe) => (
                   <Link href={`/recipes/${recipe.$id}`} key={recipe.$id}>
-                    <Card className="overflow-hidden hover:shadow-lg transition-shadow backdrop-blur-sm bg-white/50 dark:bg-black/50">
-                      <div className="aspect-video relative">
+                    <Card className="flex flex-col h-[400px] border-secondary">
+                      <div className="relative w-full h-48">
                         <Image
                           src={recipe.image}
                           alt={recipe.title}
-                          className="object-cover"
+                          className="object-cover rounded-t-lg"
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           priority={true}
                         />
                       </div>
-                      <div className="p-4">
+                      <div className="flex flex-col flex-1 p-6">
                         <h3 className="text-xl font-semibold mb-2">{recipe.title}</h3>
-                        <p className="text-muted-foreground mb-4">{recipe.description}</p>
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                          <div className="flex items-center">
-                            <Clock className="h-4 w-4 mr-1" />
-                            {recipe.time}
+                        <p className="text-muted-foreground line-clamp-3 leading-relaxed mb-4">
+                          {recipe.description}
+                        </p>
+                        <div className="flex items-center gap-4 mt-auto">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <span>{recipe.time} Minutes</span>
                           </div>
-                          <div className="flex items-center">
-                            <Users className="h-4 w-4 mr-1" />
-                            {recipe.servings} servings
+                          <div className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            <span>{recipe.servings} servings</span>
                           </div>
                         </div>
                       </div>
