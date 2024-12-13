@@ -78,49 +78,49 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-        <div className="flex flex-col items-center justify-center min-h-[80vh] text-center max-w-[1400px] mx-auto px-4">
-          <motion.div className="w-full">
-            <AnimatedText 
-              text="Share and discover amazing recipes"
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-200 bg-clip-text text-transparent leading-relaxed pb-2"
-              delay={0.2}
-            />
-            
-            <AnimatedText 
-              text="Join our community of food lovers"
-              className="mt-8 text-xl sm:text-2xl md:text-3xl lg:text-4xl text-muted-foreground leading-relaxed"
-              delay={0.7}
-            />
+      <div className="flex flex-col items-center justify-center min-h-screen text-center max-w-[1400px] mx-auto px-4">
+        <motion.div className="w-full">
+          <AnimatedText 
+            text="Share and discover amazing recipes"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-relaxed pb-2"
+            delay={0.2}
+          />
+          
+          <AnimatedText 
+            text="Join our community of food lovers"
+            className="mt-8 text-xl sm:text-2xl md:text-3xl lg:text-4xl text-muted-foreground leading-relaxed"
+            delay={0.7}
+          />
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.7, duration: 0.5 }}
-              className="flex items-center justify-center space-x-6 mt-12"
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.7, duration: 0.5 }}
+            className="flex items-center justify-center space-x-6 mt-12"
+          >
+            <Button 
+              size="lg" 
+              className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 transition-all"
+              onClick={handleShareClick}
             >
+              Create Recipe
+            </Button>
+            <Link href="/explore">
               <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-accent to-secondary hover:from-secondary hover:to-accent text-primary-foreground dark:from-primary dark:to-secondary dark:hover:from-secondary dark:hover:to-primary h-11 transition-all"
-                onClick={handleShareClick}
+                variant="outline" 
+                size="lg"
+                className="border-primary text-foreground hover:bg-primary/10 h-11"
               >
-                Create Recipe
+                Explore Recipes
               </Button>
-              <Link href="/explore">
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="text-foreground border-secondary hover:bg-foreground/10 hover:text-foreground dark:border-primary dark:text-foreground dark:hover:bg-foreground/20 h-11"
-                >
-                  Explore Recipes
-                </Button>
-              </Link>
-            </motion.div>
+            </Link>
           </motion.div>
-        </div>
+        </motion.div>
+      </div>
 
-      <main className="flex flex-col items-center min-h-screen pt-16">
+      <div className="min-h-screen py-32">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <section className="py-20 w-full">
+          <section className="w-full">
             <h2 className="text-3xl font-bold mb-12 text-center">Featured Recipes</h2>
             {loading ? (
               <div className="text-center">Loading recipes...</div>
@@ -128,7 +128,7 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recipes.map((recipe) => (
                   <Link href={`/recipes/${recipe.$id}`} key={recipe.$id}>
-                    <Card className="flex flex-col h-[400px] border-secondary">
+                    <Card className="flex flex-col h-[400px] border-secondary hover:shadow-lg transition-all duration-300">
                       <div className="relative w-full h-48">
                         <Image
                           src={recipe.image}
@@ -162,7 +162,7 @@ export default function Home() {
             )}
           </section>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -51,6 +51,17 @@ const recipeSchema = z.object({
     .min(1, "How do you prepare it? Add at least one step"),
 });
 
+interface FormData {
+  title: string;
+  description: string;
+  time: string;
+  timeUnit: 'minutes' | 'hours';
+  servings: string;
+  ingredients: Ingredient[];
+  instructions: string[];
+  image: File | null;
+}
+
 export default function CreateRecipe() {
   const { requireAuth, isLoading } = useAuth();
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: '' }]);
@@ -63,6 +74,16 @@ export default function CreateRecipe() {
   const [imagePreview, setImagePreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
+  const [formData, setFormData] = useState<FormData>({
+    title: "",
+    description: "",
+    time: "",
+    timeUnit: "minutes",
+    servings: "",
+    ingredients: [{ name: "", amount: "", unit: "" }],
+    instructions: [""],
+    image: null,
+  });
 
   useEffect(() => {
     requireAuth();
@@ -224,10 +245,15 @@ export default function CreateRecipe() {
         console.log('Image URL:', imageUrl);
       }
 
+      // Convertir tiempo a minutos si está en horas
+      const timeInMinutes = formData.timeUnit === 'hours' 
+        ? String(Number(formData.time) * 60) 
+        : formData.time;
+
       const recipeData: RecipeData = {
         title,
         description,
-        time,
+        time: timeInMinutes,
         servings,
         ingredients: JSON.stringify(ingredients),
         instructions: JSON.stringify(instructions.filter(i => i.trim() !== '')),
@@ -295,14 +321,29 @@ export default function CreateRecipe() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="time">Cooking Time</Label>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex gap-2">
                       <Input
                         id="time"
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                        placeholder="e.g. 45 minutes"
+                        type="number"
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        placeholder="Cooking time"
+                        className="flex-1"
                       />
+                      <Select
+                        value={formData.timeUnit}
+                        onValueChange={(value: 'minutes' | 'hours') => 
+                          setFormData({ ...formData, timeUnit: value })
+                        }
+                      >
+                        <SelectTrigger className="w-[110px]">
+                          <SelectValue placeholder="Unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="minutes">Minutes</SelectItem>
+                          <SelectItem value="hours">Hours</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 

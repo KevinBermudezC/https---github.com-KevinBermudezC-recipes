@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { UtensilsCrossed, Menu, Plus, User, LogOut } from "lucide-react";
+import { UtensilsCrossed, Menu, Plus, User, LogOut, Heart } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { useAuthContext } from '@/lib/auth';
 import {
@@ -65,6 +65,12 @@ export function Navbar() {
                         <span>{user.name || 'User'}</span>
                       </DropdownMenuItem>
                     </Link>
+                    <DropdownMenuItem asChild>
+                      <Link href="/favorites">
+                        <Heart className="mr-2 h-4 w-4" />
+                        Favorites
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="flex items-center text-red-600 focus:text-red-600"
                       onClick={() => signOut()}

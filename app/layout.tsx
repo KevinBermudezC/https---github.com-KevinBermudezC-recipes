@@ -22,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} bg-background min-h-screen`} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -30,13 +30,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <div className="relative min-h-screen">
+            <div className="relative min-h-screen bg-background">
               <Navbar />
               <main className="min-h-screen bg-background">
                 {children}
               </main>
               <Footer />
-              <SonnerToaster richColors position="top-center" />
+              <SonnerToaster richColors position="bottom-right" />
               <Toaster />
             </div>
           </AuthProvider>

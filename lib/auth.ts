@@ -17,8 +17,13 @@ interface User {
   name: string;
   email: string;
   emailVerification: boolean;
+  photoUrl?: string;
   providerAccessToken?: string;
   isAnonymous?: boolean;
+}
+
+interface UpdateProfileData {
+  name: string;
 }
 
 const AuthContext = createContext<ReturnType<typeof useAuth> | undefined>(undefined);
@@ -31,55 +36,58 @@ export function useAuth() {
 
   const checkAuth = useCallback(async () => {
     try {
-      let session;
-      try {
-        session = await account.getSession('current');
-      } catch {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
+      if (isLoading) return;
 
-      if (!session || session.provider === 'anonymous') {
-        setUser(null);
-        // Limpiar cualquier sesión anónima
-        try {
-          await account.deleteSession('current');
-        } catch {}
-        setIsLoading(false);
-        return;
-      }
-
+      const session = await account.getSession('current');
       const userData = await account.get();
       
-      // Solo aceptar usuarios verificados o de OAuth
-      if (userData.emailVerification || session.provider === 'google' || session.provider === 'facebook') {
-        setUser({
-          $id: userData.$id,
-          name: userData.name,
-          email: userData.email,
-          emailVerification: userData.emailVerification,
-          providerAccessToken: session.providerAccessToken,
-          isAnonymous: false
-        });
-      } else {
-        setUser(null);
-        await account.deleteSession('current');
+      setUser({
+        $id: userData.$id,
+        name: userData.name,
+        email: userData.email,
+        emailVerification: userData.emailVerification,
+        providerAccessToken: session.providerAccessToken,
+        isAnonymous: false
+      });
+    } catch (error: any) {
+      if (error?.code === 429) {
+        setTimeout(checkAuth, 2000);
+        return;
       }
-    } catch {
       setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isLoading]);
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const loginWithEmail = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      
+      try {
+        const currentSession = await account.getSession('current');
+        if (currentSession) {
+          await delay(1000);
+          await account.deleteSession('current');
+        }
+      } catch (error: any) {
+        if (error?.code === 429) {
+          toast({
+            variant: "destructive",
+            title: "Too many attempts",
+            description: "Please wait a moment before trying again"
+          });
+          return;
+        }
+      }
+
+      await delay(1000);
       await account.createEmailSession(email, password);
       await checkAuth();
       router.push('/');
@@ -98,25 +106,38 @@ export function useAuth() {
 
   const loginWithGoogle = async () => {
     try {
+      // Verificar y eliminar cualquier sesión existente
+      try {
+        const currentSession = await account.getSession('current');
+        if (currentSession) {
+          await account.deleteSession('current');
+        }
+      } catch {} // Ignorar error si no hay sesión
+
       await account.createOAuth2Session(
         'google',
         `${window.location.origin}/`,
         `${window.location.origin}/login`
       );
     } catch (error: any) {
-      if (error?.code !== 409) {
-        console.error('Google login error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to login with Google"
-        });
-      }
+      console.error('Google login error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to login with Google"
+      });
     }
   };
 
   const loginWithFacebook = async () => {
     try {
+      // Primero intentamos cerrar cualquier sesión existente
+      try {
+        await account.deleteSession('current');
+      } catch {
+        // Ignoramos error si no hay sesión
+      }
+
       await account.createOAuth2Session(
         'facebook',
         `${window.location.origin}/`,
@@ -189,6 +210,16 @@ export function useAuth() {
     }
   }, [isLoading, user, router]);
 
+  const updateProfile = async (data: UpdateProfileData) => {
+    try {
+      await account.updateName(data.name);
+      await checkAuth(); // Recargar los datos del usuario
+    } catch (error) {
+      console.error('Update profile error:', error);
+      throw error;
+    }
+  };
+
   return {
     user,
     isLoading,
@@ -198,7 +229,8 @@ export function useAuth() {
     loginWithFacebook,
     register,
     signOut: logout,
-    requireAuth
+    requireAuth,
+    updateProfile,
   };
 }
 

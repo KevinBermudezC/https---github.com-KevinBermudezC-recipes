@@ -5,8 +5,10 @@ import { useAuthContext } from "@/lib/auth";
 import { RecipeService } from "@/lib/services/recipe.service";
 import { useRouter } from "next/navigation";
 import { EditRecipeDialog } from "./edit-recipe-dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Recipe } from "@/types/recipe";
+import { Heart } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface Props {
   recipeId: string;
@@ -17,33 +19,91 @@ interface Props {
 export function RecipeActions({ recipeId, userId, recipe }: Props) {
   const { user } = useAuthContext();
   const router = useRouter();
-  const { toast } = useToast();
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const isOwner = user?.$id === userId;
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this recipe?")) return;
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (user) {
+        const isFav = await RecipeService.isFavorite(recipeId, user.$id);
+        setIsFavorite(isFav);
+      }
+    };
+    checkFavorite();
+  }, [recipeId, user]);
+
+  const handleFavorite = async () => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
 
     try {
-      await RecipeService.deleteRecipe(recipeId);
-      toast({
-        title: "Success",
-        description: "Recipe deleted successfully",
-      });
-      router.push("/");
+      if (isFavorite) {
+        await RecipeService.removeFavorite(recipeId, user.$id);
+        setIsFavorite(false);
+        toast.success('Removed from favorites');
+      } else {
+        await RecipeService.addFavorite(recipeId, user.$id);
+        setIsFavorite(true);
+        toast.success('Added to favorites');
+      }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete recipe",
-      });
+      toast.error('Failed to update favorites');
     }
+  };
+
+  const handleDelete = () => {
+    toast.custom((t) => (
+      <div className="bg-background border rounded-lg shadow-lg p-6 max-w-md">
+        <h3 className="font-semibold mb-2">Delete Recipe?</h3>
+        <p className="mb-4">
+          Are you sure you want to delete this recipe? This action cannot be undone.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => toast.dismiss(t)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="destructive"
+            onClick={() => {
+              toast.promise(
+                () => RecipeService.deleteRecipe(recipeId),
+                {
+                  loading: 'Deleting recipe...',
+                  success: () => {
+                    router.push("/");
+                    return 'Recipe deleted successfully';
+                  },
+                  error: 'Failed to delete recipe'
+                }
+              );
+              toast.dismiss(t);
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    ));
   };
 
   if (!isOwner) return null;
 
   return (
     <div className="flex items-center space-x-2">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleFavorite}
+        className={isFavorite ? 'text-red-500 hover:text-red-600' : 'hover:text-red-500'}
+      >
+        <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
+      </Button>
       <EditRecipeDialog 
         recipe={recipe}
         onUpdate={() => router.refresh()}

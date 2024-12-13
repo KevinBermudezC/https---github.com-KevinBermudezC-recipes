@@ -4,6 +4,7 @@ import { Recipe } from '@/types/recipe';
 
 const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
 const collectionId = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID!;
+const favoritesCollectionId = process.env.NEXT_PUBLIC_APPWRITE_FAVORITES_COLLECTION_ID!;
 
 export const RecipeService = {
   // Obtener todas las recetas (público)
@@ -71,5 +72,64 @@ export const RecipeService = {
       ]
     );
     return response.documents;
+  },
+
+  async addFavorite(recipeId: string, userId: string) {
+    return databases.createDocument(
+      databaseId,
+      favoritesCollectionId,
+      ID.unique(),
+      {
+        userId,
+        recipeId,
+      }
+    );
+  },
+
+  async removeFavorite(recipeId: string, userId: string) {
+    const favorites = await databases.listDocuments(
+      databaseId,
+      favoritesCollectionId,
+      [
+        Query.equal('userId', userId),
+        Query.equal('recipeId', recipeId),
+      ]
+    );
+
+    if (favorites.documents.length > 0) {
+      await databases.deleteDocument(
+        databaseId,
+        favoritesCollectionId,
+        favorites.documents[0].$id
+      );
+    }
+  },
+
+  async isFavorite(recipeId: string, userId: string) {
+    const favorites = await databases.listDocuments(
+      databaseId,
+      favoritesCollectionId,
+      [
+        Query.equal('userId', userId),
+        Query.equal('recipeId', recipeId),
+      ]
+    );
+    return favorites.documents.length > 0;
+  },
+
+  async getFavorites(userId: string) {
+    const favorites = await databases.listDocuments(
+      databaseId,
+      favoritesCollectionId,
+      [Query.equal('userId', userId)]
+    );
+
+    const recipes = await Promise.all(
+      favorites.documents.map(async (fav) => {
+        return this.getRecipe(fav.recipeId);
+      })
+    );
+
+    return recipes.filter(Boolean);
   },
 }; 

@@ -1,16 +1,16 @@
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Clock, Users } from "lucide-react";
 import Image from 'next/image';
 import { RecipeActions } from "./components/recipe-actions";
 import { RecipeService } from "@/lib/services/recipe.service";
 import { Recipe } from "@/types/recipe";
-import { databases } from '@/lib/appwrite';
+import { formatCookingTime } from "@/lib/utils";
+import { Suspense } from "react";
 
 interface Props {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 interface Ingredient {
@@ -36,15 +36,15 @@ async function getRecipe(id: string) {
 }
 
 export default async function RecipePage({ params }: Props) {
-  try {
-    const id = await params.id;
-    const recipe = await getRecipe(id);
+  const resolvedParams = await params;
+  const recipe = await getRecipe(resolvedParams.id);
 
-    if (!recipe) {
-      return <div className="container py-8 text-center">Recipe not found</div>;
-    }
+  if (!recipe) {
+    return <div className="container py-8 text-center">Recipe not found</div>;
+  }
 
-    return (
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20">
         <div className="max-w-4xl mx-auto">
           <div className="relative aspect-video mb-8 rounded-lg overflow-hidden">
@@ -58,26 +58,28 @@ export default async function RecipePage({ params }: Props) {
             />
           </div>
 
-          <div className="flex justify-between items-start mb-6">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
+            <div className="w-full">
               <h1 className="text-4xl font-bold mb-2">{recipe.title}</h1>
-              <p className="text-muted-foreground mb-4">{recipe.description}</p>
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center">
-                  <Clock className="h-5 w-5 mr-2" />
-                  {recipe.time}
+              <p className="mb-4">{recipe.description}</p>
+              <div className="flex items-center gap-4 ">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  <span>{formatCookingTime(Number(recipe.time))}</span>
                 </div>
-                <div className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  {recipe.servings} servings
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <span>{recipe.servings} servings</span>
                 </div>
               </div>
             </div>
-            <RecipeActions 
-              recipeId={recipe.$id ?? ''} 
-              userId={recipe.userId ?? ''} 
-              recipe={recipe} 
-            />
+            <div className="sm:ml-4">
+              <RecipeActions 
+                recipeId={recipe.$id ?? ''} 
+                userId={recipe.userId ?? ''} 
+                recipe={recipe} 
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -87,7 +89,7 @@ export default async function RecipePage({ params }: Props) {
                 {recipe.ingredients.map((ingredient: Ingredient, index: number) => (
                   <li key={index} className="flex justify-between">
                     <span>{ingredient.name}</span>
-                    <span className="text-muted-foreground">
+                    <span >
                       {ingredient.amount} {ingredient.unit}
                     </span>
                   </li>
@@ -95,7 +97,7 @@ export default async function RecipePage({ params }: Props) {
               </ul>
             </Card>
 
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 p-6">
               <h2 className="text-xl font-semibold mb-4">Instructions</h2>
               <ol className="space-y-4">
                 {recipe.instructions.map((instruction: string, index: number) => (
@@ -109,9 +111,6 @@ export default async function RecipePage({ params }: Props) {
           </div>
         </div>
       </div>
-    );
-  } catch (error) {
-    console.error('Error loading recipe:', error);
-    return <div>Error loading recipe</div>;
-  }
+    </Suspense>
+  );
 }
