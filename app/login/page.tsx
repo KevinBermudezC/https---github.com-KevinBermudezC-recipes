@@ -10,7 +10,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function Login() {
-  const { loginWithEmail, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { loginWithEmail, loginWithGoogle, loginWithFacebook, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -54,8 +54,8 @@ export default function Login() {
             />
           </div>
 
-          <Button type="submit" className="w-full bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
-            Sign in with Email
+          <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
+            {isLoading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
 

@@ -43,8 +43,6 @@ export function useAuth() {
       }
       setLastCheck(now);
 
-      if (isLoading) return;
-
       const session = await account.getSession('current');
       const userData = await account.get();
       
@@ -56,57 +54,50 @@ export function useAuth() {
         providerAccessToken: session.providerAccessToken,
         isAnonymous: false
       });
+      setIsLoading(false);
     } catch (error: any) {
       if (error?.code === 429) {
         setTimeout(checkAuth, 5000);
         return;
       }
       setUser(null);
-    } finally {
       setIsLoading(false);
     }
-  }, [isLoading, lastCheck]);
+  }, [lastCheck]);
 
   useEffect(() => {
-    if (!user && !isLoading) {
-      checkAuth();
-    }
-  }, [checkAuth, user, isLoading]);
+    checkAuth();
+  }, [checkAuth]);
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const loginWithEmail = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      
+
       try {
-        const currentSession = await account.getSession('current');
-        if (currentSession) {
-          await delay(1000);
-          await account.deleteSession('current');
-        }
-      } catch (error: any) {
-        if (error?.code === 429) {
-          toast({
-            variant: "destructive",
-            title: "Too many attempts",
-            description: "Please wait a moment before trying again"
-          });
-          return;
-        }
-      }
+        await account.deleteSession('current');
+      } catch {}
 
       await delay(1000);
       await account.createEmailSession(email, password);
       await checkAuth();
       router.push('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email login error:', error);
-      toast({
-        variant: "destructive",
-        title: "Login failed",
-        description: "Invalid email or password"
-      });
+      if (error?.code === 429) {
+        toast({
+          variant: "destructive",
+          title: "Too many attempts",
+          description: "Please wait a moment before trying again"
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: "Invalid email or password"
+        });
+      }
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -115,13 +106,12 @@ export function useAuth() {
 
   const loginWithGoogle = async () => {
     try {
-      // Verificar y eliminar cualquier sesión existente
       try {
         const currentSession = await account.getSession('current');
         if (currentSession) {
           await account.deleteSession('current');
         }
-      } catch {} // Ignorar error si no hay sesión
+      } catch {}
 
       await account.createOAuth2Session(
         'google',
@@ -140,11 +130,9 @@ export function useAuth() {
 
   const loginWithFacebook = async () => {
     try {
-      // Primero intentamos cerrar cualquier sesión existente
       try {
         await account.deleteSession('current');
       } catch {
-        // Ignoramos error si no hay sesión
       }
 
       await account.createOAuth2Session(
@@ -222,7 +210,7 @@ export function useAuth() {
   const updateProfile = async (data: UpdateProfileData) => {
     try {
       await account.updateName(data.name);
-      await checkAuth(); // Recargar los datos del usuario
+      await checkAuth();
     } catch (error) {
       console.error('Update profile error:', error);
       throw error;
