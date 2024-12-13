@@ -92,8 +92,6 @@ export function RecipeActions({ recipeId, userId, recipe }: Props) {
     ));
   };
 
-  if (!isOwner) return null;
-
   return (
     <div className="flex items-center space-x-2">
       <Button
@@ -104,13 +102,17 @@ export function RecipeActions({ recipeId, userId, recipe }: Props) {
       >
         <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
       </Button>
-      <EditRecipeDialog 
-        recipe={recipe}
-        onUpdate={() => router.refresh()}
-      />
-      <Button variant="destructive" onClick={handleDelete}>
-        Delete
-      </Button>
+      {isOwner && (
+        <>
+          <EditRecipeDialog 
+            recipe={recipe}
+            onUpdate={() => router.refresh()}
+          />
+          <Button variant="destructive" onClick={handleDelete}>
+            Delete
+          </Button>
+        </>
+      )}
     </div>
   );
 } 

@@ -31,11 +31,18 @@ const AuthContext = createContext<ReturnType<typeof useAuth> | undefined>(undefi
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastCheck, setLastCheck] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
 
   const checkAuth = useCallback(async () => {
     try {
+      const now = Date.now();
+      if (now - lastCheck < 5000) {
+        return;
+      }
+      setLastCheck(now);
+
       if (isLoading) return;
 
       const session = await account.getSession('current');
@@ -51,18 +58,20 @@ export function useAuth() {
       });
     } catch (error: any) {
       if (error?.code === 429) {
-        setTimeout(checkAuth, 2000);
+        setTimeout(checkAuth, 5000);
         return;
       }
       setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, lastCheck]);
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (!user && !isLoading) {
+      checkAuth();
+    }
+  }, [checkAuth, user, isLoading]);
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
