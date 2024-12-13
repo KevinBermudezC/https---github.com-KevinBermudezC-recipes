@@ -87,9 +87,9 @@ export default async function RecipePage({ params }: Props) {
               <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
               <ul className="space-y-2">
                 {recipe.ingredients.map((ingredient: Ingredient, index: number) => (
-                  <li key={index} className="flex justify-between">
-                    <span>{ingredient.name}</span>
-                    <span >
+                  <li key={index} className="flex justify-between items-center">
+                    <span className="flex-1">{ingredient.name}</span>
+                    <span className="w-24 text-right">
                       {ingredient.amount} {ingredient.unit}
                     </span>
                   </li>
