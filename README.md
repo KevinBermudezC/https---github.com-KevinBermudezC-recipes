@@ -5,7 +5,7 @@ CookBook is a modern web application that allows users to share and discover cul
 ## Technologies Used
 
 **Frontend:**
-- Next.js 14: React framework with Server-Side Rendering.
+- Next.js 15: React framework with Server-Side Rendering.
 - TypeScript: Static typing for JavaScript.
 - Tailwind CSS: Utility-first CSS framework.
 - Shadcn/ui: Reusable UI components (Dialog, Dropdown Menu, Form, Input, Navigation Menu, Popover, Select, Sheet, and more).
@@ -70,6 +70,7 @@ To set up the project locally, follow these steps:
    NEXT_PUBLIC_APPWRITE_DATABASE_ID=your_database_id
    NEXT_PUBLIC_APPWRITE_COLLECTION_ID=your_collection_id
    NEXT_PUBLIC_APPWRITE_BUCKET_ID=your_bucket_id
+   NEXT_PUBLIC_APPWRITE_FAVORITES_COLLECTION_ID=your_favoritesCollection_id
    ```
 
 5. Start the development server:
@@ -83,8 +84,11 @@ To set up the project locally, follow these steps:
 cookbook/
 ├── app/                  # Next.js routes and pages
 │   ├── create-recipe/    # Recipe creation page
+│   ├── explore/          # Explore Recipes page
+│   ├── favorites/        # Favorites recipes page
 │   ├── recipes/          # Recipe details and listing
 │   ├── login/            # Authentication pages
+│   ├── profile/          # User Profile page
 │   └── register/         # User registration
 ├── components/           # Reusable components
 │   ├── ui/               # UI components
