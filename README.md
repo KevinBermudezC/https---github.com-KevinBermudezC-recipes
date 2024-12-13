@@ -1,5 +1,7 @@
 # CookBook - Recipe Sharing Platform
 
+![image](https://github.com/user-attachments/assets/22503093-4864-43bf-90b7-c18e08298cde)
+
 CookBook is a modern web application that allows users to share and discover culinary recipes. Users can create, edit, and explore recipes through an intuitive and attractive interface, making recipe sharing an enjoyable experience.
 
 ## Technologies Used
