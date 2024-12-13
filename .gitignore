@@ -37,3 +37,5 @@ next-env.d.ts
 .bolt/config.json
 .bolt/prompt
 .bolt
+# Sentry Config File
+.env.sentry-build-plugin
