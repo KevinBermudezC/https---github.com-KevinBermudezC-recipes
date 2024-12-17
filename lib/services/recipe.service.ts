@@ -132,4 +132,47 @@ export const RecipeService = {
 
     return recipes.filter(Boolean);
   },
+
+  // Obtener recetas relacionadas (basadas en el usuario actual)
+  getRelatedRecipes: async (currentRecipeId: string, limit: number = 4) => {
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        collectionId,
+        [
+          Query.notEqual('$id', currentRecipeId),
+          Query.limit(limit)
+        ]
+      );
+      return response.documents;
+    } catch (error) {
+      console.error('Error fetching related recipes:', error);
+      return [];
+    }
+  },
+
+  // Obtener favoritos del usuario actual
+  getUserFavorites: async (userId: string, limit: number = 4) => {
+    try {
+      const favorites = await databases.listDocuments(
+        databaseId,
+        favoritesCollectionId,
+        [
+          Query.equal('userId', userId),
+          Query.limit(limit)
+        ]
+      );
+
+      const recipes = await Promise.all(
+        favorites.documents.map(fav => 
+          databases.getDocument(databaseId, collectionId, fav.recipeId)
+        )
+      );
+
+      return recipes;
+    } catch (error) {
+      console.error('Error fetching user favorites:', error);
+      return [];
+    }
+  }
 }; 

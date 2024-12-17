@@ -6,6 +6,9 @@ import { RecipeService } from "@/lib/services/recipe.service";
 import { Recipe } from "@/types/recipe";
 import { formatCookingTime } from "@/lib/utils";
 import { Suspense } from "react";
+import { useRecipes } from '@/hooks/useRecipes';
+import { useAuth } from '@/lib/auth';
+import Link from 'next/link';
 
 interface Props {
   params: Promise<{
@@ -35,9 +38,16 @@ async function getRecipe(id: string) {
   }
 }
 
+async function getRelatedAndFavorites(recipeId: string, userId?: string) {
+  const related = await RecipeService.getRelatedRecipes(recipeId);
+  const favorites = userId ? await RecipeService.getUserFavorites(userId) : [];
+  return { related, favorites };
+}
+
 export default async function RecipePage({ params }: Props) {
   const resolvedParams = await params;
   const recipe = await getRecipe(resolvedParams.id);
+  const { related, favorites } = await getRelatedAndFavorites(resolvedParams.id, recipe?.users);
 
   if (!recipe) {
     return <div className="container py-8 text-center">Recipe not found</div>;
@@ -109,6 +119,60 @@ export default async function RecipePage({ params }: Props) {
               </ol>
             </div>
           </div>
+
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold mb-6">You might also like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {related.map((relatedRecipe) => (
+                <Link href={`/recipes/${relatedRecipe.$id}`} key={relatedRecipe.$id}>
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="relative aspect-video">
+                      <Image
+                        src={relatedRecipe.image}
+                        alt={relatedRecipe.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold">{relatedRecipe.title}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {relatedRecipe.description}
+                      </p>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {favorites.length > 0 && (
+            <div className="mt-16">
+              <h2 className="text-2xl font-bold mb-6">Your Favorites</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {favorites.map((favorite) => (
+                  <Link href={`/recipes/${favorite.$id}`} key={favorite.$id}>
+                    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="relative aspect-video">
+                        <Image
+                          src={favorite.image}
+                          alt={favorite.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold">{favorite.title}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {favorite.description}
+                        </p>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Suspense>
