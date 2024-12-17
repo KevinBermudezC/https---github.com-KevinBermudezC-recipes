@@ -31,20 +31,35 @@ const AuthContext = createContext<ReturnType<typeof useAuth> | undefined>(undefi
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [lastCheck, setLastCheck] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
 
   const checkAuth = useCallback(async () => {
     try {
-      const now = Date.now();
-      if (now - lastCheck < 5000) {
-        return;
-      }
-      setLastCheck(now);
-
       const session = await account.getSession('current');
       const userData = await account.get();
+      setUser({
+        $id: userData.$id,
+        name: userData.name,
+        email: userData.email,
+        emailVerification: userData.emailVerification,
+        providerAccessToken: session.providerAccessToken,
+        isAnonymous: false
+      });
+    } catch {
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const loginWithEmail = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      await account.createEmailSession(email, password);
+      
+      const userData = await account.get();
+      const session = await account.getSession('current');
       
       setUser({
         $id: userData.$id,
@@ -54,51 +69,26 @@ export function useAuth() {
         providerAccessToken: session.providerAccessToken,
         isAnonymous: false
       });
-      setIsLoading(false);
+
+      router.refresh();
+      return { success: true, user: userData };
     } catch (error: any) {
-      if (error?.code === 429) {
-        setTimeout(checkAuth, 5000);
-        return;
-      }
-      setUser(null);
-      setIsLoading(false);
-    }
-  }, [lastCheck]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  const loginWithEmail = async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-
-      try {
-        await account.deleteSession('current');
-      } catch {}
-
-      await delay(1000);
-      await account.createEmailSession(email, password);
-      await checkAuth();
-      router.push('/');
-    } catch (error: any) {
-      console.error('Email login error:', error);
-      if (error?.code === 429) {
-        toast({
-          variant: "destructive",
-          title: "Too many attempts",
-          description: "Please wait a moment before trying again"
-        });
-      } else {
+      // Manejar errores específicos
+      if (error?.code === 401) {
         toast({
           variant: "destructive",
           title: "Login failed",
           description: "Invalid email or password"
         });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: "An error occurred while logging in"
+        });
       }
       setUser(null);
+      return { success: false, error };
     } finally {
       setIsLoading(false);
     }
@@ -128,40 +118,18 @@ export function useAuth() {
     }
   };
 
-  const loginWithFacebook = async () => {
-    try {
-      try {
-        await account.deleteSession('current');
-      } catch {
-      }
-
-      await account.createOAuth2Session(
-        'facebook',
-        `${window.location.origin}/`,
-        `${window.location.origin}/login`
-      );
-    } catch (error: any) {
-      if (error?.code !== 409) {
-        console.error('Facebook login error:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to login with Facebook"
-        });
-      }
-    }
-  };
-
   const register = async (email: string, password: string, name: string) => {
     try {
       try {
-        await account.get();
-        toast({
-          variant: "destructive",
-          title: "Registration failed",
-          description: "You are already logged in"
-        });
-        return;
+        const currentUser = await account.get();
+        if (currentUser) {
+          toast({
+            variant: "destructive",
+            title: "Registration failed",
+            description: "You are already logged in"
+          });
+          return { success: false };
+        }
       } catch {}
 
       await account.create(ID.unique(), email, password, name);
@@ -170,6 +138,7 @@ export function useAuth() {
         description: "Please login with your new account"
       });
       router.push('/login');
+      return { success: true };
     } catch (error: any) {
       if (error?.code === 409) {
         toast({
@@ -178,13 +147,13 @@ export function useAuth() {
           description: "Email already exists"
         });
       } else {
-        console.error('Registration error:', error);
         toast({
           variant: "destructive",
           title: "Registration failed",
           description: "Please try again later"
         });
       }
+      return { success: false, error };
     }
   };
 
@@ -217,13 +186,16 @@ export function useAuth() {
     }
   };
 
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return {
     user,
     isLoading,
     isAuthenticated: !!user && !isLoading && !user.isAnonymous,
     loginWithEmail,
     loginWithGoogle,
-    loginWithFacebook,
     register,
     signOut: logout,
     requireAuth,
@@ -232,8 +204,8 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }): JSX.Element {
-  const auth = useAuth();
-  return React.createElement(AuthContext.Provider, { value: auth }, children);
+  const authValue = useAuth();
+  return React.createElement(AuthContext.Provider, { value: authValue }, children);
 }
 
 export function useAuthContext() {

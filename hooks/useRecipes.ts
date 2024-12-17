@@ -28,7 +28,7 @@ export function useRecipes(requireAuth: boolean = false) {
         ingredients: doc.ingredients,
         instructions: doc.instructions,
         image: doc.image,
-        userId: doc.userId
+        users: doc.users
       })));
     } catch (err) {
       setError('Error fetching recipes');

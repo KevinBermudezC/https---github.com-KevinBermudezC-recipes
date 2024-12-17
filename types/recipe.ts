@@ -5,7 +5,8 @@ export interface Ingredient {
 }
 
 export interface Recipe {
-  $id?: string;
+  $id: string;
+  $createdAt: string;
   title: string;
   description: string;
   time: string;
@@ -13,8 +14,7 @@ export interface Recipe {
   ingredients: string;
   instructions: string;
   image: string;
-  userId: string;
-  $createdAt?: string;
+  users: string;
 }
 
 export interface User {

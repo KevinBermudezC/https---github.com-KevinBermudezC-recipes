@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import Image from "next/image";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { redirect } from 'next/navigation';
 
 function generateUniqueId() {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -33,7 +34,7 @@ interface RecipeData {
   ingredients: string;
   instructions: string;
   image: string;
-  userId: string;
+  users: string;
 }
 
 // Schema de validación
@@ -62,8 +63,8 @@ interface FormData {
   image: File | null;
 }
 
-export default function CreateRecipe() {
-  const { requireAuth, isLoading } = useAuth();
+export default function CreateRecipePage() {
+  const { requireAuth, isLoading, user } = useAuth();
   const [ingredients, setIngredients] = useState<Ingredient[]>([{ name: '', amount: '', unit: '' }]);
   const [instructions, setInstructions] = useState<string[]>(['']);
   const [title, setTitle] = useState("");
@@ -88,6 +89,11 @@ export default function CreateRecipe() {
   useEffect(() => {
     requireAuth();
   }, [requireAuth]);
+
+  if (!user) {
+    redirect('/login');
+    return null;
+  }
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -230,7 +236,6 @@ export default function CreateRecipe() {
       let imageUrl = '';
       if (imageFile) {
         const fileId = generateUniqueId();
-
         const file = await storage.createFile(
           process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!,
           fileId,
@@ -241,24 +246,17 @@ export default function CreateRecipe() {
           process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID!,
           fileId
         ).href;
-        
-        console.log('Image URL:', imageUrl);
       }
-
-      // Convertir tiempo a minutos si está en horas
-      const timeInMinutes = formData.timeUnit === 'hours' 
-        ? String(Number(formData.time) * 60) 
-        : formData.time;
 
       const recipeData: RecipeData = {
         title,
         description,
-        time: timeInMinutes,
+        time: formData.timeUnit === 'hours' ? String(Number(formData.time) * 60) : formData.time,
         servings,
         ingredients: JSON.stringify(ingredients),
         instructions: JSON.stringify(instructions.filter(i => i.trim() !== '')),
         image: imageUrl,
-        userId: user.$id,
+        users: user.$id
       };
 
       const response = await databases.createDocument(
@@ -268,15 +266,11 @@ export default function CreateRecipe() {
         recipeData
       );
       
-      toast.success('Recipe published successfully!', {
-        description: "Others can now enjoy your creation"
-      });
+      toast.success('Recipe published successfully!');
       router.push(`/recipes/${response.$id}`);
     } catch (error) {
-      toast.error('Could not save your recipe', {
-        description: "Please try again. If the problem persists, contact support"
-      });
       console.error('Error:', error);
+      toast.error('Could not save your recipe');
     } finally {
       setUploading(false);
       toast.dismiss(loadingToast);

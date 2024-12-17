@@ -76,7 +76,7 @@ export default async function RecipePage({ params }: Props) {
             <div className="sm:ml-4">
               <RecipeActions 
                 recipeId={recipe.$id ?? ''} 
-                userId={recipe.userId ?? ''} 
+                userId={recipe.users ?? ''} 
                 recipe={recipe} 
               />
             </div>

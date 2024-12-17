@@ -5,18 +5,38 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from '@/lib/auth';
-import { Facebook } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { toast } from "sonner";
 
 export default function Login() {
-  const { loginWithEmail, loginWithGoogle, loginWithFacebook, isLoading } = useAuth();
+  const { loginWithEmail, loginWithGoogle, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await loginWithEmail(email, password);
+    setLoading(true);
+
+    try {
+      const result = await loginWithEmail(email, password);
+      if (result.success) {
+        toast.success('Welcome back!');
+        setTimeout(() => {
+          router.push('/');
+          router.refresh();
+        }, 100);
+      } else {
+        toast.error('Invalid credentials');
+      }
+    } catch (error) {
+      toast.error('Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,8 +74,8 @@ export default function Login() {
             />
           </div>
 
-          <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
-            {isLoading ? 'Logging in...' : 'Login'}
+          <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-800">
+            {loading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
 
@@ -97,14 +117,7 @@ export default function Login() {
             Continue with Google
           </Button>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => loginWithFacebook()}
-          >
-            <Facebook className="w-5 h-5 mr-2 text-[#1877F2]" />
-            Continue with Facebook
-          </Button>
+          
         </div>
 
         <div className="text-center text-sm">

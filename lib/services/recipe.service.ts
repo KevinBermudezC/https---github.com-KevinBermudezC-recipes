@@ -68,7 +68,7 @@ export const RecipeService = {
       databaseId,
       collectionId,
       [
-        Query.equal('userId', [userId])
+        Query.equal('users', [userId])
       ]
     );
     return response.documents;

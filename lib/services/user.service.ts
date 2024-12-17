@@ -1,4 +1,4 @@
-import { account } from '@/lib/appwrite';
+import { account, ID } from '@/lib/appwrite';
 import { User } from '@/types/recipe';
 
 export const UserService = {

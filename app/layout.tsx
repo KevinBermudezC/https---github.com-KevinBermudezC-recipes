@@ -22,7 +22,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-background min-h-screen`} suppressHydrationWarning>
+      <body 
+        className={`${inter.className} bg-background min-h-screen overflow-y-scroll`} 
+        suppressHydrationWarning
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

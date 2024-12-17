@@ -20,10 +20,12 @@ import {
   SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useState, useEffect } from 'react';
+import { account } from '@/lib/appwrite';
 
 export function Navbar() {
   const { user, signOut } = useAuthContext();
-
+  
   return (
     <header className="fixed top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container max-w-7xl mx-auto px-4">
